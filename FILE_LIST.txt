@@ -1,0 +1,11 @@
+GÓI CHAT APP PHP THUẦN - SQL TÁCH RIÊNG TỪNG BẢNG + BÌNH LUẬN BÀI ĐĂNG
+
+- database/create_database.sql
+- database/tables/: 22 file SQL, mỗi bảng một file; tên file không đánh số
+- database/seeds/default_records.sql
+- database/seeds/demo_data.sql
+- database/migrations/social_feed_tables.sql
+- social_feed.php
+- assets/css/social_feed.css
+- docs/social_feed_erd.mmd
+- README.md
