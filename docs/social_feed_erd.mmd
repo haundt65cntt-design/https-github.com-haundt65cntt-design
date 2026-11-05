@@ -1,0 +1,30 @@
+erDiagram
+    USERS ||--o{ SOCIAL_POSTS : publishes
+    USERS ||--o{ SOCIAL_POST_REACTIONS : reacts
+    SOCIAL_POSTS ||--o{ SOCIAL_POST_REACTIONS : receives
+    USERS ||--o{ SOCIAL_POST_COMMENTS : writes
+    SOCIAL_POSTS ||--o{ SOCIAL_POST_COMMENTS : contains
+
+    SOCIAL_POSTS {
+        INT id PK
+        INT user_id FK
+        TEXT content
+        VARCHAR image_filename
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    SOCIAL_POST_REACTIONS {
+        INT id PK
+        INT post_id FK
+        INT user_id FK
+        ENUM reaction_type
+        TIMESTAMP created_at
+    }
+    SOCIAL_POST_COMMENTS {
+        INT id PK
+        INT post_id FK
+        INT user_id FK
+        TEXT content
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }

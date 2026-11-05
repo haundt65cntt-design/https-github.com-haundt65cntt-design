@@ -1,0 +1,20 @@
+<?php
+/**
+ * cPanel / production database config example
+ * 
+ * Setup steps:
+ * 1. Create MySQL database in cPanel (e.g. engchoonhao_chatting)
+ * 2. Create MySQL user and set password, add user to database with ALL PRIVILEGES
+ * 3. Copy this file to database.local.php (do not commit to Git)
+ * 4. Fill in database.local.php with cPanel values:
+ *    - Database name (often prefixed, e.g. engchoonhao_chatting)
+ *    - Username (often prefixed, e.g. engchoonhao_hongmun)
+ *    - Password (set when creating user in cPanel)
+ *    - Host is usually localhost (see cPanel docs)
+ */
+return [
+    'host'     => 'localhost',
+    'dbname'   => 'your_database_name_e.g._engchoonhao_chatting',
+    'username' => 'your_db_username_e.g._engchoonhao_hongmun',
+    'password' => 'your_database_password',
+];
