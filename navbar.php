@@ -122,6 +122,9 @@ if ($is_logged_in && $user_id) {
         <div class="nav-tab" data-tab="friends" title="Bạn bè" aria-label="Bạn bè">
             <i class="fas fa-address-book" aria-hidden="true"></i>
             <span class="tab-text">Bạn bè</span>
+            <?php if (!empty($pending_requests)): ?>
+                <span class="friend-request-count" aria-label="<?php echo count($pending_requests); ?> pending friend requests"><?php echo count($pending_requests); ?></span>
+            <?php endif; ?>
         </div>
         <div class="nav-tab <?php echo (basename($_SERVER['PHP_SELF']) === 'group.php') ? 'active' : ''; ?>" data-tab="groups" title="Nhóm" aria-label="Nhóm">
             <i class="fas fa-users" aria-hidden="true"></i>
@@ -211,44 +214,51 @@ if ($is_logged_in && $user_id) {
             </div>
             
             <!-- Friend Requests Section -->
-            <?php if (!empty($pending_requests)): ?>
-                <div class="friend-requests-section">
-                    <h6 class="section-title">
-                        <i class="fas fa-user-plus"></i> Friend Requests (<?php echo count($pending_requests); ?>)
-                    </h6>
+            <div class="friend-requests-section" aria-live="polite">
+                <h6 class="section-title">
+                    <i class="fas fa-user-plus"></i> Friend Requests (<?php echo count($pending_requests); ?>)
+                </h6>
+                <?php if (!empty($pending_requests)): ?>
                     <div class="friend-requests-list">
                         <?php foreach ($pending_requests as $request): ?>
-                            <div class="friend-request-item" data-user-id="<?php echo $request['id']; ?>" data-username="<?php echo htmlspecialchars($request['username']); ?>">
+                            <?php
+                            $request_username = $request['username'] ?? '';
+                            $request_name = $request['full_name'] ?: $request_username;
+                            $request_avatar = $request['avatar'] ?? '';
+                            ?>
+                            <div class="friend-request-item" data-user-id="<?php echo (int)$request['id']; ?>" data-username="<?php echo htmlspecialchars($request_username, ENT_QUOTES, 'UTF-8'); ?>">
                                 <div class="friend-request-avatar">
                                     <div class="avatar-circle purple">
-                                        <?php if ($request['avatar'] && $request['avatar'] !== 'default_avatar.png' && file_exists('uploads/avatars/' . $request['avatar'])): ?>
-                                            <img src="uploads/avatars/<?php echo htmlspecialchars($request['avatar']); ?>?t=<?php echo time(); ?>" alt="Avatar" class="request-avatar-image">
+                                        <?php if ($request_avatar && $request_avatar !== 'default_avatar.png' && file_exists('uploads/avatars/' . $request_avatar)): ?>
+                                            <img src="uploads/avatars/<?php echo htmlspecialchars($request_avatar, ENT_QUOTES, 'UTF-8'); ?>?t=<?php echo time(); ?>" alt="" class="request-avatar-image">
                                         <?php else: ?>
-                                            <?php echo strtoupper(substr($request['username'], 0, 1)); ?>
+                                            <?php echo htmlspecialchars(strtoupper(substr($request_username, 0, 1)), ENT_QUOTES, 'UTF-8'); ?>
                                         <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="friend-request-details">
-                                    <div class="friend-request-name"><?php echo htmlspecialchars($request['full_name'] ?? $request['username']); ?></div>
+                                    <div class="friend-request-name"><?php echo htmlspecialchars($request_name, ENT_QUOTES, 'UTF-8'); ?></div>
                                     <div class="friend-request-time"><?php echo date('M j, Y', strtotime($request['request_date'])); ?></div>
                                 </div>
                                 <div class="friend-request-actions">
-                                    <button class="btn-accept-request" data-user-id="<?php echo $request['id']; ?>" title="Accept">
+                                    <button type="button" class="btn-accept-request" data-user-id="<?php echo (int)$request['id']; ?>" title="Accept" aria-label="Accept friend request from <?php echo htmlspecialchars($request_name, ENT_QUOTES, 'UTF-8'); ?>">
                                         <i class="fas fa-check"></i>
                                     </button>
-                                    <button class="btn-reject-request" data-user-id="<?php echo $request['id']; ?>" title="Reject">
+                                    <button type="button" class="btn-reject-request" data-user-id="<?php echo (int)$request['id']; ?>" title="Reject" aria-label="Reject friend request from <?php echo htmlspecialchars($request_name, ENT_QUOTES, 'UTF-8'); ?>">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
-                </div>
-            <?php endif; ?>
+                <?php else: ?>
+                    <div class="friend-request-empty">No pending friend requests</div>
+                <?php endif; ?>
+            </div>
             
             <div class="friends-list">
                 <?php if (empty($friends)): ?>
-                    <div class="no-friends">No friends yet</div>
+                    <div class="no-friends">No accepted friends yet</div>
                 <?php else: ?>
                     <?php foreach ($friends as $friend): ?>
                         <div class="friend-item" data-user-id="<?php echo $friend['id']; ?>" data-username="<?php echo htmlspecialchars($friend['username'], ENT_QUOTES, 'UTF-8'); ?>" data-full-name="<?php echo htmlspecialchars($friend['full_name'] ?? $friend['username'], ENT_QUOTES, 'UTF-8'); ?>">
@@ -561,6 +571,22 @@ if ($is_logged_in && $user_id) {
     font-weight: 500;
     color: var(--sidebar-text);
     transition: all var(--transition-speed) ease;
+}
+
+.friend-request-count {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 9px;
+    color: #fff;
+    background: #e5484d;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 17px;
+    text-align: center;
 }
 
 .nav-tab.active {
@@ -955,6 +981,13 @@ a.group-item {
     background: rgba(59, 130, 246, 0.06);
     border-radius: 8px;
     border: 1px solid #e9ecef;
+}
+
+.friend-request-empty {
+    padding: 10px 8px;
+    color: #6c757d;
+    font-size: 13px;
+    text-align: center;
 }
 
 .section-title {
