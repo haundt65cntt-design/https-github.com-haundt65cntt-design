@@ -117,36 +117,50 @@ function handleAcceptFriendRequest($pdo, $user_id) {
     }
     $data = json_decode($input, true);
     
-    if (!$data || !isset($data['friend_id'])) {
+    if (!is_array($data) || !isset($data['friend_id'])) {
         echo json_encode(['success' => false, 'error' => 'Friend ID is required']);
         return;
     }
     
     $friend_id = (int)$data['friend_id'];
+    if ($friend_id <= 0 || $friend_id === (int)$user_id) {
+        echo json_encode(['success' => false, 'error' => 'Invalid friend ID']);
+        return;
+    }
     
     try {
-        // Start transaction to ensure both operations succeed
         $pdo->beginTransaction();
         
-        // Update the friend request to accepted
         $stmt = $pdo->prepare("
             UPDATE friends 
             SET status = 'accepted', updated_at = NOW() 
             WHERE user_id = ? AND friend_id = ? AND status = 'pending'
         ");
         
-        if (!$stmt->execute([$friend_id, $user_id])) {
-            throw new Exception('Failed to update friend request');
+        $stmt->execute([$friend_id, $user_id]);
+        if ($stmt->rowCount() !== 1) {
+            $pdo->rollBack();
+            echo json_encode(['success' => false, 'error' => 'This friend request is no longer available']);
+            return;
         }
         
-        // Create reciprocal friendship if it doesn't exist
         $check_stmt = $pdo->prepare("
-            SELECT id FROM friends 
-            WHERE user_id = ? AND friend_id = ? AND status = 'accepted'
+            SELECT id, status FROM friends
+            WHERE user_id = ? AND friend_id = ?
         ");
         $check_stmt->execute([$user_id, $friend_id]);
-        
-        if (!$check_stmt->fetch()) {
+        $reciprocal = $check_stmt->fetch();
+
+        if ($reciprocal && $reciprocal['status'] === 'blocked') {
+            throw new Exception('Cannot accept a request while this user is blocked');
+        } elseif ($reciprocal) {
+            $reciprocal_stmt = $pdo->prepare("
+                UPDATE friends
+                SET status = 'accepted', updated_at = NOW()
+                WHERE id = ?
+            ");
+            $reciprocal_stmt->execute([$reciprocal['id']]);
+        } else {
             $reciprocal_stmt = $pdo->prepare("
                 INSERT INTO friends (user_id, friend_id, status, created_at) 
                 VALUES (?, ?, 'accepted', NOW())
